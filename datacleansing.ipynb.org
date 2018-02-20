@@ -1,0 +1,243 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### csv加工"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "'C:\\\\Users\\\\ikki_ikazaki\\\\KIBIT\\\\ikki_modules'"
+      ]
+     },
+     "execution_count": 24,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "from IPython.display import display\n",
+    "import os\n",
+    "os.getcwd()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "['.ipynb_checkpoints',\n",
+       " '0. LIV各種資料',\n",
+       " '1. アルゴリズム',\n",
+       " '20171122_評価指標まとめ.pptx',\n",
+       " 'analysis_with_kibit_180131',\n",
+       " 'ikki_modules',\n",
+       " 'KIBITプラットフォーム',\n",
+       " 'KIBIT解析MTG',\n",
+       " 'NLP100Drills',\n",
+       " 'old',\n",
+       " 'root_for_Windows',\n",
+       " 'root_for_Windows.zip',\n",
+       " 'root_for_Windows2',\n",
+       " '要件定義シート.xlsx']"
+      ]
+     },
+     "execution_count": 25,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "os.listdir('..\\\\')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "# csvファイルからのデータの読み込み\n",
+    "import pandas as pd\n",
+    "\n",
+    "sample = pd.read_csv('..\\\\analysis_with_kibit_180131\\\\data\\\\sample.csv', engine='python')\n",
+    "sample"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "[544, 545, 546, 547]"
+      ]
+     },
+     "execution_count": 27,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# 見つけたいデータのインデックスをリスト化する。\n",
+    "import numpy as np\n",
+    "\n",
+    "test = list(sample[sample['test'] == 1].index)\n",
+    "test"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "# .iloc[行, 列]に見つけたいデータのインデックスを指定して抽出する。\n",
+    "output = sample.iloc[test, :]\n",
+    "output"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "# （参考）直接数字を打つパターン\n",
+    "sample.sort_values(by='test', ascending=False)\n",
+    "output2 = sample.iloc[544:548, :]\n",
+    "output2"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "output.to_csv('data\\\\test.csv', encoding='utf-8-sig')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 形態素解析"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "# csv_to_txt converter\n",
+    "# 必要な引数：csv入力パス、text出力パス\n",
+    "# 設定の必要があるパラメータ：textファイルの名前になるカラム名（デフォルト：ID）、出力したいカラム名（デフォルト：text）、出力先のパス名\n",
+    "import pandas as pd\n",
+    "import codecs\n",
+    "\n",
+    "def csv_to_text(df, outPath):\n",
+    "    outPath += \"/texts\"\n",
+    "\n",
+    "    for i in df.index:\n",
+    "        fname = \"{0}/{1}.txt\".format(outPath, df['ID'][i])\n",
+    "        fw = codecs.open(fname, \"w\", \"utf-8\")\n",
+    "        fw.write(str(df[\"text\"][i]))\n",
+    "        fw.close()\n",
+    "\n",
+    "# csv入力パスを指定します。\n",
+    "test2 = pd.read_csv('..\\\\..\\\\Desktop\\\\analysis\\\\data\\\\sample.csv', engine='python')\n",
+    "\n",
+    "# csv_to_text converterを実行します。\n",
+    "csv_to_text(test2, 'C:\\\\Users\\\\ikki_ikazaki\\\\Desktop\\\\analysis\\\\input')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "# 形態素解析実行モジュール\n",
+    "# 必要な引数：コマンド、text入力パス、出力パス、configパス\n",
+    "# 実行ディレクトリを変えたい場合は、abs_pathを変えてください。\n",
+    "import os\n",
+    "import subprocess\n",
+    "\n",
+    "# パスを指定します。\n",
+    "abs_path = os.path.abspath('..\\\\..\\\\Desktop\\\\analysis')\n",
+    "base_args = [\n",
+    "    'java', '-jar', '{0}\\\\kibit-local-api.jar'.format(abs_path)]\n",
+    "input_path = '{0}\\\\input\\\\texts'.format(abs_path)\n",
+    "element_path = '{0}\\\\output\\\\elements'.format(abs_path)\n",
+    "config = '{0}\\\\all.txt'.format(abs_path)\n",
+    "\n",
+    "# コマンドを作ります。\n",
+    "exe_args = base_args + \\\n",
+    "    [\n",
+    "        'ELEMENTS', input_path, 'utf-8',\n",
+    "        element_path, config\n",
+    "    ]\n",
+    "\n",
+    "# コマンドを実行します。\n",
+    "try:\n",
+    "    subprocess.check_output(exe_args)\n",
+    "except subprocess.CalledProcessError as e:\n",
+    "    raise Exception('[ERROR] java error')"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.6.0"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
