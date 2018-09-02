@@ -3,7 +3,7 @@ from logging import getLogger, Formatter, StreamHandler, FileHandler, DEBUG
 from LoadData import load_train_data, load_test_data, load_submission
 import pandas as pd 
 import numpy as np
-from sklearn.model_selection import train_test_split, cross_val_score, KFold, TimeSeriesSplit, GroupKFold
+from sklearn.model_selection import train_test_split, cross_val_score, KFold, TimeSeriesSplit, GroupKFold, GridSearchCV
 from sklearn.ensemble import RandomForestRegressor
 
 # ログの出力名を設定
@@ -48,6 +48,12 @@ def forest_submit():
 	forest.fit(X, y)
 	logger.debug('Fitting end')
 	
+    #EDAしたいとき
+	#fti = forest.feature_importances_
+	#print('Feature Importances:')
+	#for i, feature in enumerate(train.colunms):
+	#	print('\t{0:10s}:{1:>.6f}'.format(feature, fti[i]))
+    
 	logger.info('Scoring start')
 	#logger.info('Accuracy on test set: {:.3f}'.format(.score(X_test, y_test)))
 	test_data = load_test_data()
@@ -62,8 +68,12 @@ def forest_submit():
 	logger.debug('====================')
 
 
-# CV: KFold, StratifiedKFold, GroupKFold
+# CV: KFold, StratifiedKFold, TimeSeriesSplit, GroupKFold
 # [http://scikit-learn.org/stable/modules/cross_validation.html]
+# TimeSeriesSplit()によるCV
+# [http://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html]
+# 以下のイメージで分割する。TESTを予測するために、直近のTRAINを使うイメージがtscv
+# TRAIN: [0] TEST: [1], TRAIN: [0 1] TEST: [2], TRAIN: [0 1 2] TEST: [3]
 def forest_cv():
 	logger.info('RandomForestRegressor start')
 
@@ -85,7 +95,8 @@ def forest_cv():
 	#shuffle_cvしたいときは上記引数をTrueにすればよい。毎回分割が変わる。
 	kfold = KFold(n_splits=3, shuffle=True, random_state=0)
 	#skf = StratifiedKFold(n_splits=3)  #skfはkfoldと同じ引数をもつ。
-	scores = cross_val_score(forest, X, y, cv=kfold)
+	#tscv = TimeSeriesSplit(n_splits=3)
+    scores = cross_val_score(forest, X, y, cv=kfold)
 	#以下、GroupKFoldを使うときの書き方
 	#groups = list(train['date_block_num'])
 	#scores = cross_val_score(forest, X, y, groups, cv=GroupKFold(n_splits=3))
@@ -97,12 +108,8 @@ def forest_cv():
 	logger.debug('====================')
 	
 
-# TimeSeriesSplit()によるCV
-# [http://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html]
-# 以下のイメージで分割する。TESTを予測するために、直近のTRAINを使うイメージがtscv
-# TRAIN: [0] TEST: [1], TRAIN: [0 1] TEST: [2], TRAIN: [0 1 2] TEST: [3]
-def forest_tscv():
-	logger.info('RandomForestRegressor start')
+def forest_gscv():
+    logger.info('RandomForestRegressor start')
 
 	logger.debug('make_train_data start')
 	train = pd.read_csv('./result_tmp/scaled_train.csv')
@@ -110,20 +117,25 @@ def forest_tscv():
 	X = train.drop(['item_cnt_month'], axis=1).values
 	logger.debug('make_train_data end')
 
-	logger.info('TimeSeries Cross-validation start')
-	forest = RandomForestRegressor(n_estimators=50, random_state=1)
-	
-	tscv = TimeSeriesSplit(n_splits=3)
-	scores = cross_val_score(forest, X, y, cv=tscv)
-	logger.info('TSCross-validation scores_forest: {}'.format(scores))
-	logger.info('Average TSCross-validation score_forest: {}'.format(scores.mean()))
-	logger.debug('TimeSeries Cross-validation end')
+	logger.info('GridSearchCV start')
+	param_grid = {'n_estimators':[10, 30, 50],
+				 'random_state':[1, 2, 3]}
+	logger.debug('Parameter grid:\n{}'.format(param_grid))
+	grid_search = GridSearchCV(RandomForestRegressor(), param_grid, cv=5, n_jobs=4)  #n_jobsで使用するCPUの数を指定できる。-1にすれば全部使う。
+	X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
+	grid_search.fit(X_train, y_train)
+	logger.info('Best GridSearchCV parameters_forest: {}'.format(grid_search.best_params_))
+	logger.info('Best GridSearchCV score_forest: {}'.format(grid_search.best_score_))
+	logger.info('Test set score_forest: {:.2f}'.format(grid_search.score(X_test, y_test)))
+	results = pd.DataFrame(grid_search.cv_results_)
+	results.to_csv('./result_tmp/GridSearch.csv', encoding='utf-8-sig', index=False)
+	logger.debug('GridSearchCV end')
 	
 	logger.debug('RandomForestRegressor end')
 	logger.debug('====================')
-
+    
 
 if __name__ == '__main__':
 	forest_submit()
 	#forest_cv()
-	#forest_tscv()
+	#forest_gscv()
