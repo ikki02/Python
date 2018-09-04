@@ -229,6 +229,17 @@ def xgboost_submit():
 	logger.debug('====================')
     
 
+# 線形回帰
+# 通常最小二乗法。OLS（ordinary least squares）
+# 予測と真の回帰ターゲットyとの平均二乗誤差（mean squared error）が最小となるパラメータwとbを求める。
+# from sklearn.linear_model import LinearRegression
+
+# 基本リッジ回帰を使えばよい。特徴量の取捨選択をより明瞭に実施したい際は、Lassoを使う手もある。
+# LassoはL1正則化を実施、いくつかの係数が完全に0になる。
+# Lassoはridgeと同様alphaをもつ。過剰適合を減らすためにはalphaをデフォルト値1から減らせばよい。
+# その際、max_iterをデフォルト値から増やす必要がある。
+# from sklearn.linear_model import Lasso
+# lasso = Lasso(alpha=0.0001, max_iter=100000)
 def ridge_gscv():
 	logger.info('RidgeRegression start')
 
