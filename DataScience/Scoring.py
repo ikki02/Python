@@ -170,11 +170,20 @@ def xgboost_gscv():
 
 	logger.info('GridSearchCV start')
 	reg = xgb.XGBRegressor()
+    #xgboostのパラメータ
+    #etaやmin_child_weightも重要。
+    # https://github.com/dmlc/xgboost/blob/master/doc/parameter.rst
+    # https://xgboost.readthedocs.io/en/latest/python/python_api.html
 	param_grid = {'max_depth': [2, 4, 6], 'n_estimators': [50, 100, 500]}
 	logger.debug('Parameter grid:\n{}'.format(param_grid))
 	grid_search = GridSearchCV(reg, param_grid, cv=5, n_jobs=-1)
 	X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
-	grid_search.fit(X_train, y_train)
+	# fitするとき、以下の引数も重要
+    # eval_metric="rmse", eval_set=[(X_train, Y_train), (X_valid, Y_valid)], \
+    # verbose=True, early_stopping_rounds = 10
+    # 順に開設すると、①評価指標はrmseで、②2つのデータセットを評価し、③結果を逐次出力し、
+    # ④10回精度が上がらなくなったら処理をとめる。
+    grid_search.fit(X_train, y_train)
 	logger.info('Best GridSearchCV parameters_xgb: {}'.format(grid_search.best_params_))
 	logger.info('Best GridSearchCV score_xgb: {}'.format(grid_search.best_score_))
 	logger.info('Test set score_xgb: {:.2f}'.format(grid_search.score(X_test, y_test)))
