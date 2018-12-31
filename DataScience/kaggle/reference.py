@@ -8,5 +8,5 @@ train = train.set_index('date')
 train = pd.merge(train, shop_item, how='left', on=['shop_id','item_id']).fillna(0.)
 
 # 変数の値をファイルに記録したいときの書き方。
-with open('hoge.txt', 'wt') as fout:
-    print(forest.predict(test), file=fout)
+with open('hoge.txt', 'wt') as fw:
+    print(forest.predict(test), file=fw)
