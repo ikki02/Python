@@ -12,4 +12,5 @@ EXPOSE 9999
 
 ENTRYPOINT ["flask"]
 CMD ["run", "--host=0.0.0.0", "--port=9999"]
-#docker run -d -p 9999:9999 myflask
+#サーバー上でdocker run -d -p 9999:9999 myflask
+#ローカルでcurl http://eip:9999ってすればサーバ内コンテナのflaskサーバーにリクエストできる。
