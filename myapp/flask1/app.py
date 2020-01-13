@@ -90,4 +90,4 @@ def internal_server_error_handler(e):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=9999)
+    app.run() #hostは指定する必要がある。portは任意で構わないが、セキュリティグループの設定を忘れずに。
